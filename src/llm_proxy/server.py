@@ -112,20 +112,16 @@ class ProxyServer:
             # Check if this should be a streaming request
             if self._is_streaming_request(body):
                 # Handle streaming responses
-                async with self.client.stream(
-                    method=request.method,
-                    url=target_url,
-                    params=request.query_params,
-                    headers=headers,
-                    content=body
-                ) as response:
-                    return StreamingResponse(
-                        self._stream_response(response),
-                        status_code=response.status_code,
-                        media_type="text/event-stream",
-                        headers={k: v for k, v in response.headers.items()
-                                 if k.lower() not in ["content-length", "transfer-encoding"]}
-                    )
+                return StreamingResponse(
+                    self._stream_from_vllm(
+                        method=request.method,
+                        url=target_url,
+                        params=request.query_params,
+                        headers=headers,
+                        content=body
+                    ),
+                    media_type="text/event-stream"
+                )
             else:
                 # Make the request to vLLM server for non-streaming
                 response = await self.client.request(
@@ -156,6 +152,19 @@ class ProxyServer:
                 status_code=500,
                 detail=f"Proxy request failed: {str(e)}"
             )
+
+    async def _stream_from_vllm(self, method, url, params, headers, content):
+        """Stream response from vLLM server with proper context management."""
+        async with self.client.stream(
+            method=method,
+            url=url,
+            params=params,
+            headers=headers,
+            content=content
+        ) as response:
+            async for chunk in response.aiter_bytes():
+                logger.debug(f"Streaming chunk: {chunk}")
+                yield chunk
 
     async def _stream_response(self, response: httpx.Response):
         """Stream response from vLLM server."""
