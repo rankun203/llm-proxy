@@ -69,7 +69,14 @@ llm-proxy --use-slurm --loopback-user e123456 --loopback-host 10.10.10.5 -- \
 llm-proxy --use-slurm --srun-cmd "srun --mem=60G --gres=gpu:2 --time=4:00:00" \
   --loopback-user e123456 --loopback-host 10.10.10.5 -- \
   uv run --with vllm python -m vllm.entrypoints.openai.api_server --model some-model
+
+# A working example
+uv run --with vllm --with numpy==1.26.4 --with flashinfer-python==0.2.2 llm-proxy --use-slurm --loopback-user e128356 --loopback-host 10.205.51.153 -- python -m vllm.entrypoints.openai.api_server --model Qwen/Qwen3-0.6B
 ```
+
+Issues that are hard to debug:
+
+- Wrong ssh username or password, check the logging output files.
 
 ### Custom Idle Timeout
 

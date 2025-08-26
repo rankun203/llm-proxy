@@ -120,7 +120,7 @@ class ProcessManager:
         # Build the bash script content
         bash_script = f"""
 # Start reverse SSH tunnel in background
-ssh -v -N -f -R {self.target_port}:localhost:{self.target_port} {self.loopback_user}@{self.loopback_host}
+ssh -vv -N -f -R {self.target_port}:localhost:{self.target_port} {self.loopback_user}@{self.loopback_host}
 
 # Start vLLM server
 {' '.join(shlex.quote(arg) for arg in vllm_command)}
