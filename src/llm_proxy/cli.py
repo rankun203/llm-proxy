@@ -114,6 +114,7 @@ def main(
 
     # Get vLLM command from extra arguments
     vllm_command = ctx.args
+    logger.debug(f"vLLM command: {vllm_command}")
 
     # Validate arguments
     if use_slurm and (not loopback_user or not loopback_host):
