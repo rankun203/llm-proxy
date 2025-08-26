@@ -31,7 +31,10 @@ def signal_handler(signum, frame):
     cli_context.shutdown_event.set()
 
 
-@click.command()
+@click.command(context_settings=dict(
+    ignore_unknown_options=True,
+    allow_extra_args=True,
+))
 @click.option(
     "--port",
     default=8100,
@@ -72,8 +75,9 @@ def signal_handler(signum, frame):
     type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR"]),
     help="Logging level (default: INFO)"
 )
-@click.argument("vllm_command", nargs=-1, required=True)
+@click.pass_context
 def main(
+    ctx: click.Context,
     port: int,
     target_port: Optional[int],
     use_slurm: bool,
@@ -82,7 +86,6 @@ def main(
     loopback_host: Optional[str],
     idle_timeout: int,
     log_level: str,
-    vllm_command: tuple,
 ):
     """
     llm-proxy: A FastAPI proxy server for vLLM with SLURM support.
@@ -90,22 +93,27 @@ def main(
     Start a FastAPI server that proxies requests to a vLLM server.
     The vLLM server is started on-demand when the first request is received.
 
+    Use -- to separate llm-proxy options from the vLLM command.
+
     Examples:
 
     \b
     # Basic usage
-    llm-proxy uv run --with vllm python -m vllm.entrypoints.openai.api_server --model some-model
+    llm-proxy -- uv run --with vllm python -m vllm.entrypoints.openai.api_server --model some-model
 
     \b
     # With SLURM
-    llm-proxy --use-slurm --loopback-user user --loopback-host host uv run --with vllm python -m vllm.entrypoints.openai.api_server --model some-model
+    llm-proxy --use-slurm --loopback-user user --loopback-host host -- uv run --with vllm python -m vllm.entrypoints.openai.api_server --model some-model
 
     \b
     # Custom ports and timeout
-    llm-proxy --port 8085 --target-port 8084 --idle-timeout 3600 uv run --with vllm python -m vllm.entrypoints.openai.api_server --model some-model
+    llm-proxy --port 8085 --target-port 8084 --idle-timeout 3600 -- uv run --with vllm python -m vllm.entrypoints.openai.api_server --model some-model
     """
     # Set up logging
     setup_logging(log_level)
+
+    # Get vLLM command from extra arguments
+    vllm_command = ctx.args
 
     # Validate arguments
     if use_slurm and (not loopback_user or not loopback_host):
@@ -126,7 +134,7 @@ def main(
             click.echo(f"Error: {e}", err=True)
             sys.exit(1)
 
-    # Convert vllm_command tuple to list
+    # Convert vllm_command to list
     vllm_command_list = list(vllm_command)
 
     logger.info(

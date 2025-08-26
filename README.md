@@ -33,8 +33,10 @@ pip install -e .
 Start a proxy server that will launch vLLM on-demand:
 
 ```bash
-llm-proxy uv run --with vllm python -m vllm.entrypoints.openai.api_server --model tiiuae/falcon3-10b-instruct
+llm-proxy -- uv run --with vllm python -m vllm.entrypoints.openai.api_server --model tiiuae/falcon3-10b-instruct
 ```
+
+**Note:** Use `--` to separate llm-proxy options from the vLLM command.
 
 This will:
 
@@ -46,7 +48,7 @@ This will:
 ### Custom Ports
 
 ```bash
-llm-proxy --port 8085 --target-port 8084 uv run --with vllm python -m vllm.entrypoints.openai.api_server --model some-model
+llm-proxy --port 8085 --target-port 8084 -- uv run --with vllm python -m vllm.entrypoints.openai.api_server --model some-model
 ```
 
 ### SLURM Integration
@@ -54,7 +56,7 @@ llm-proxy --port 8085 --target-port 8084 uv run --with vllm python -m vllm.entry
 For running on SLURM clusters with SSH reverse tunneling:
 
 ```bash
-llm-proxy --use-slurm --loopback-user e123456 --loopback-host 10.10.10.5 \
+llm-proxy --use-slurm --loopback-user e123456 --loopback-host 10.10.10.5 -- \
   uv run --with vllm python -m vllm.entrypoints.openai.api_server \
   --model tiiuae/falcon3-10b-instruct \
   --api-key apikey \
@@ -65,14 +67,14 @@ llm-proxy --use-slurm --loopback-user e123456 --loopback-host 10.10.10.5 \
 
 ```bash
 llm-proxy --use-slurm --srun-cmd "srun --mem=60G --gres=gpu:2 --time=4:00:00" \
-  --loopback-user e123456 --loopback-host 10.10.10.5 \
+  --loopback-user e123456 --loopback-host 10.10.10.5 -- \
   uv run --with vllm python -m vllm.entrypoints.openai.api_server --model some-model
 ```
 
 ### Custom Idle Timeout
 
 ```bash
-llm-proxy --idle-timeout 3600 uv run --with vllm python -m vllm.entrypoints.openai.api_server --model some-model
+llm-proxy --idle-timeout 3600 -- uv run --with vllm python -m vllm.entrypoints.openai.api_server --model some-model
 ```
 
 ## Command Line Options
