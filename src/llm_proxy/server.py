@@ -3,6 +3,7 @@ FastAPI server with health endpoint and vLLM proxy functionality.
 """
 
 import asyncio
+import json
 import logging
 import time
 from typing import Optional
@@ -54,6 +55,24 @@ class ProxyServer:
             """Proxy requests to vLLM server."""
             return await self._handle_proxy_request(request, path)
 
+    def _is_streaming_request(self, body: bytes) -> bool:
+        if not body:
+            return False
+
+        try:
+            # Decode and parse the JSON body
+            body_str = body.decode('utf-8').strip()
+            if not body_str.startswith('{'):
+                return False
+
+            body_json = json.loads(body_str)
+
+            # Check if stream property exists and is True
+            return body_json.get('stream', False) is True
+
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            return False
+
     async def _handle_proxy_request(self, request: Request, path: str):
         """Handle proxy requests to vLLM server."""
         self.last_request_time = time.time()
@@ -90,22 +109,30 @@ class ProxyServer:
                 if key.lower() not in ["host", "content-length"]
             }
 
-            # Make the request to vLLM server
-            response = await self.client.request(
-                method=request.method,
-                url=target_url,
-                params=request.query_params,
-                headers=headers,
-                content=body
-            )
-
-            # Handle streaming responses
-            if response.headers.get("content-type", "").startswith("text/event-stream"):
-                return StreamingResponse(
-                    self._stream_response(response),
-                    media_type="text/event-stream",
-                    headers={k: v for k, v in response.headers.items()
-                             if k.lower() != "content-length"}
+            # Check if this should be a streaming request
+            if self._is_streaming_request(body):
+                # Handle streaming responses
+                async with self.client.stream(
+                    method=request.method,
+                    url=target_url,
+                    params=request.query_params,
+                    headers=headers,
+                    content=body
+                ) as response:
+                    return StreamingResponse(
+                        self._stream_response(response),
+                        media_type="text/event-stream",
+                        headers={k: v for k, v in response.headers.items()
+                                 if k.lower() != "content-length"}
+                    )
+            else:
+                # Make the request to vLLM server for non-streaming
+                response = await self.client.request(
+                    method=request.method,
+                    url=target_url,
+                    params=request.query_params,
+                    headers=headers,
+                    content=body
                 )
 
             # Handle regular responses
