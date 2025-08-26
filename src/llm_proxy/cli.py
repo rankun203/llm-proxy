@@ -70,6 +70,11 @@ def signal_handler(signum, frame):
     help="Idle timeout in seconds before shutting down vLLM server (default: 1800)"
 )
 @click.option(
+    "--ping-path",
+    default="/ping",
+    help="Path to ping the target server to check if it's ready (default: /ping)"
+)
+@click.option(
     "--log-level",
     default="INFO",
     type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR"]),
@@ -85,6 +90,7 @@ def main(
     loopback_user: Optional[str],
     loopback_host: Optional[str],
     idle_timeout: int,
+    ping_path: str,
     log_level: str,
 ):
     """
@@ -151,6 +157,7 @@ def main(
         loopback_user=loopback_user,
         loopback_host=loopback_host,
         idle_timeout=idle_timeout,
+        ping_path=ping_path,
         vllm_command=vllm_command_list
     ))
 
@@ -163,6 +170,7 @@ async def async_main(
     loopback_user: Optional[str],
     loopback_host: Optional[str],
     idle_timeout: int,
+    ping_path: str,
     vllm_command: List[str]
 ):
     """Async main function."""
@@ -184,7 +192,8 @@ async def async_main(
         port=port,
         target_port=target_port,
         process_manager=process_manager,
-        idle_timeout=idle_timeout
+        idle_timeout=idle_timeout,
+        ping_path=ping_path
     )
 
     # Set the vLLM command

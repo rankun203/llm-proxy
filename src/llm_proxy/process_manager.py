@@ -7,6 +7,7 @@ import logging
 import shlex
 import signal
 import subprocess
+from datetime import datetime
 from typing import List, Optional
 from .utils import parse_vllm_command
 
@@ -29,6 +30,8 @@ class ProcessManager:
         self.loopback_host = loopback_host
         self.process: Optional[subprocess.Popen] = None
         self.is_running = False
+        self.stdout_file = None
+        self.stderr_file = None
 
     async def start_vllm_server(self, vllm_command: List[str]) -> bool:
         """
@@ -57,11 +60,23 @@ class ProcessManager:
             logger.info(
                 f"Starting vLLM server with command: {' '.join(final_command)}")
 
+            # Create log files with timestamp in /tmp directory
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            stdout_log_path = f"/tmp/llm_proxy_stdout_{timestamp}.log"
+            stderr_log_path = f"/tmp/llm_proxy_stderr_{timestamp}.log"
+
+            # Open log files
+            self.stdout_file = open(stdout_log_path, 'w')
+            self.stderr_file = open(stderr_log_path, 'w')
+
+            logger.info(f"Logging stdout to: {stdout_log_path}")
+            logger.info(f"Logging stderr to: {stderr_log_path}")
+
             # Start the process
             self.process = subprocess.Popen(
                 final_command,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                stdout=self.stdout_file,
+                stderr=self.stderr_file,
                 preexec_fn=None if self.use_slurm else lambda: signal.signal(
                     signal.SIGINT, signal.SIG_IGN)
             )
@@ -74,10 +89,10 @@ class ProcessManager:
 
             if self.process.poll() is not None:
                 # Process has already terminated
-                stdout, stderr = self.process.communicate()
                 logger.error(
-                    f"vLLM server failed to start. stdout: {stdout.decode()}, stderr: {stderr.decode()}")
+                    "vLLM server failed to start. Check log files for details.")
                 self.is_running = False
+                self._close_log_files()
                 return False
 
             return True
@@ -85,6 +100,7 @@ class ProcessManager:
         except Exception as e:
             logger.error(f"Failed to start vLLM server: {e}")
             self.is_running = False
+            self._close_log_files()
             return False
 
     def _build_slurm_command(self, vllm_command: List[str]) -> List[str]:
@@ -149,6 +165,7 @@ ssh -v -N -f -R {self.target_port}:localhost:{self.target_port} {self.loopback_u
 
             self.is_running = False
             self.process = None
+            self._close_log_files()
             return True
 
         except Exception as e:
@@ -159,6 +176,24 @@ ssh -v -N -f -R {self.target_port}:localhost:{self.target_port} {self.loopback_u
         """Wait for the process to terminate."""
         while self.process and self.process.poll() is None:
             await asyncio.sleep(0.1)
+
+    def _close_log_files(self):
+        """Close log files if they are open."""
+        if self.stdout_file:
+            try:
+                self.stdout_file.close()
+            except Exception as e:
+                logger.warning(f"Error closing stdout log file: {e}")
+            finally:
+                self.stdout_file = None
+
+        if self.stderr_file:
+            try:
+                self.stderr_file.close()
+            except Exception as e:
+                logger.warning(f"Error closing stderr log file: {e}")
+            finally:
+                self.stderr_file = None
 
     def is_server_running(self) -> bool:
         """
@@ -181,3 +216,4 @@ ssh -v -N -f -R {self.target_port}:localhost:{self.target_port} {self.loopback_u
         """Clean up resources."""
         if self.is_running:
             await self.stop_vllm_server()
+        self._close_log_files()

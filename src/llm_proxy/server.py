@@ -21,11 +21,13 @@ class ProxyServer:
         target_port: int,
         process_manager: ProcessManager,
         idle_timeout: int = 1800,  # 30 minutes in seconds
+        ping_path: str = "/ping",
     ):
         self.port = port
         self.target_port = target_port
         self.process_manager = process_manager
         self.idle_timeout = idle_timeout
+        self.ping_path = ping_path
         self.last_request_time = time.time()
         self.vllm_command: Optional[list] = None
         self.app = FastAPI(title="llm-proxy", version="0.1.0")
@@ -132,24 +134,26 @@ class ProxyServer:
         async for chunk in response.aiter_bytes():
             yield chunk
 
-    async def _wait_for_vllm_ready(self, max_wait: int = 60):
+    async def _wait_for_vllm_ready(self):
         """Wait for vLLM server to be ready to accept requests."""
         start_time = time.time()
+        last_logged_at = start_time
 
-        while time.time() - start_time < max_wait:
+        while True:
             try:
-                health_url = f"http://localhost:{self.target_port}/health"
-                response = await self.client.get(health_url, timeout=5.0)
+                ping_url = f"http://localhost:{self.target_port}{self.ping_path}"
+                response = await self.client.get(ping_url, timeout=5.0)
                 if response.status_code == 200:
                     logger.info("vLLM server is ready")
                     return
             except Exception as e:
-                logger.warning(f"vLLM server is not ready yet: {e}")
+                logger.debug(f"vLLM server is not ready yet: {e}")
                 pass
 
+            if time.time() - last_logged_at > 60:
+                logger.info("Waited for 60s, vLLM server still starting...")
+                last_logged_at = time.time()
             await asyncio.sleep(1)
-
-        logger.warning("vLLM server may not be fully ready yet")
 
     def _start_idle_monitor(self):
         """Start the idle timeout monitor."""
