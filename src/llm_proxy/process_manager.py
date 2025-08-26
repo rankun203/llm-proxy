@@ -22,12 +22,14 @@ class ProcessManager:
         srun_cmd: str = "srun --mem=30G --gres=gpu:1",
         loopback_user: Optional[str] = None,
         loopback_host: Optional[str] = None,
+        instance_id: str = "default",
     ):
         self.target_port = target_port
         self.use_slurm = use_slurm
         self.srun_cmd = srun_cmd
         self.loopback_user = loopback_user
         self.loopback_host = loopback_host
+        self.instance_id = instance_id
         self.process: Optional[subprocess.Popen] = None
         self.is_running = False
         self.stdout_file = None
@@ -60,10 +62,9 @@ class ProcessManager:
             logger.info(
                 f"Starting vLLM server with command: {' '.join(final_command)}")
 
-            # Create log files with timestamp in /tmp directory
-            timestamp = datetime.now().strftime("%Y%m%d")
-            stdout_log_path = f"/tmp/llm_proxy_stdout_{timestamp}.log"
-            stderr_log_path = f"/tmp/llm_proxy_stderr_{timestamp}.log"
+            # Create log files in /tmp directory with unique instance ID
+            stdout_log_path = f"/tmp/llm_proxy_{self.instance_id}_stdout.log"
+            stderr_log_path = f"/tmp/llm_proxy_{self.instance_id}_stderr.log"
 
             # Open log files
             self.stdout_file = open(stdout_log_path, 'a')

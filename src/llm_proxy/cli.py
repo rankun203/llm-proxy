@@ -6,6 +6,7 @@ import asyncio
 import logging
 import signal
 import sys
+import uuid
 from typing import List, Optional
 import click
 import uvicorn
@@ -144,8 +145,12 @@ def main(
     # Convert vllm_command to list
     vllm_command_list = list(vllm_command)
 
+    # Generate unique short ID for this instance
+    instance_id = str(uuid.uuid4())[:8]
+
     logger.info(
         f"Starting llm-proxy on port {port}, target port {target_port}")
+    logger.info(f"Instance ID: {instance_id}")
     logger.info(f"vLLM command: {' '.join(vllm_command_list)}")
 
     # Run the async main function
@@ -158,7 +163,8 @@ def main(
         loopback_host=loopback_host,
         idle_timeout=idle_timeout,
         ping_path=ping_path,
-        vllm_command=vllm_command_list
+        vllm_command=vllm_command_list,
+        instance_id=instance_id
     ))
 
 
@@ -171,7 +177,8 @@ async def async_main(
     loopback_host: Optional[str],
     idle_timeout: int,
     ping_path: str,
-    vllm_command: List[str]
+    vllm_command: List[str],
+    instance_id: str
 ):
     """Async main function."""
     # Set up signal handlers
@@ -184,7 +191,8 @@ async def async_main(
         use_slurm=use_slurm,
         srun_cmd=srun_cmd,
         loopback_user=loopback_user,
-        loopback_host=loopback_host
+        loopback_host=loopback_host,
+        instance_id=instance_id
     )
 
     # Create proxy server
