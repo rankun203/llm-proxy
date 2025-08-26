@@ -81,6 +81,10 @@ def signal_handler(signum, frame):
     type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR"]),
     help="Logging level (default: INFO)"
 )
+@click.option(
+    "--api-key",
+    help="API key for Bearer token authentication (optional)"
+)
 @click.pass_context
 def main(
     ctx: click.Context,
@@ -93,6 +97,7 @@ def main(
     idle_timeout: int,
     ping_path: str,
     log_level: str,
+    api_key: Optional[str],
 ):
     """
     llm-proxy: A FastAPI proxy server for vLLM with SLURM support.
@@ -164,7 +169,8 @@ def main(
         idle_timeout=idle_timeout,
         ping_path=ping_path,
         vllm_command=vllm_command_list,
-        instance_id=instance_id
+        instance_id=instance_id,
+        api_key=api_key
     ))
 
 
@@ -178,7 +184,8 @@ async def async_main(
     idle_timeout: int,
     ping_path: str,
     vllm_command: List[str],
-    instance_id: str
+    instance_id: str,
+    api_key: Optional[str]
 ):
     """Async main function."""
     # Set up signal handlers
@@ -200,6 +207,7 @@ async def async_main(
         port=port,
         target_port=target_port,
         process_manager=process_manager,
+        api_key=api_key,
         idle_timeout=idle_timeout,
         ping_path=ping_path
     )

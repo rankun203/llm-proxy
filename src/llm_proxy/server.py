@@ -7,8 +7,9 @@ import json
 import logging
 import time
 from typing import Optional
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, Depends, Header
 from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import httpx
 from .process_manager import ProcessManager
 
@@ -21,12 +22,14 @@ class ProxyServer:
         port: int,
         target_port: int,
         process_manager: ProcessManager,
+        api_key: Optional[str] = None,
         idle_timeout: int = 1800,  # 30 minutes in seconds
         ping_path: str = "/ping",
     ):
         self.port = port
         self.target_port = target_port
         self.process_manager = process_manager
+        self.api_key = api_key
         self.idle_timeout = idle_timeout
         self.ping_path = ping_path
         self.last_request_time = time.time()
@@ -36,6 +39,23 @@ class ProxyServer:
 
         self._setup_routes()
         self._start_idle_monitor()
+
+    def verified_api_token(self, authorization: Optional[str] = Header(None)):
+        """Verify API token if API key is configured."""
+        if not self.api_key:
+            return True
+        
+        if not authorization:
+            raise HTTPException(status_code=401, detail="Authorization header required")
+        
+        if not authorization.startswith("Bearer "):
+            raise HTTPException(status_code=401, detail="Invalid authorization format")
+        
+        token = authorization[7:]  # Remove "Bearer " prefix
+        if token != self.api_key:
+            raise HTTPException(status_code=401, detail="Invalid API key")
+        
+        return True
 
     def _setup_routes(self):
         """Set up FastAPI routes."""
@@ -51,7 +71,7 @@ class ProxyServer:
             }
 
         @self.app.api_route("/v1/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
-        async def proxy_vllm(request: Request, path: str):
+        async def proxy_vllm(request: Request, path: str, authorized: bool = Depends(self.verified_api_token)):
             """Proxy requests to vLLM server."""
             return await self._handle_proxy_request(request, path)
 
