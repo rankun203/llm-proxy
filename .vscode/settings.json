@@ -1,6 +1,9 @@
 {
   "cSpell.words": [
+    "flashinfer",
     "gres",
+    "numpy",
+    "Qwen",
     "SLURM",
     "srun",
     "tiiuae",
