@@ -131,7 +131,8 @@ class ProxyServer:
 
     async def _stream_response(self, response: httpx.Response):
         """Stream response from vLLM server."""
-        async for chunk in response.aiter_lines():
+        async for chunk in response.aiter_bytes():
+            logger.debug(f"Streaming chunk: {chunk}")
             yield chunk
 
     async def _wait_for_vllm_ready(self):
