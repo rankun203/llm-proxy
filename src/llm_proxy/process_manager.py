@@ -61,13 +61,13 @@ class ProcessManager:
                 f"Starting vLLM server with command: {' '.join(final_command)}")
 
             # Create log files with timestamp in /tmp directory
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            timestamp = datetime.now().strftime("%Y%m%d")
             stdout_log_path = f"/tmp/llm_proxy_stdout_{timestamp}.log"
             stderr_log_path = f"/tmp/llm_proxy_stderr_{timestamp}.log"
 
             # Open log files
-            self.stdout_file = open(stdout_log_path, 'w')
-            self.stderr_file = open(stderr_log_path, 'w')
+            self.stdout_file = open(stdout_log_path, 'a')
+            self.stderr_file = open(stderr_log_path, 'a')
 
             logger.info(f"Logging stdout to: {stdout_log_path}")
             logger.info(f"Logging stderr to: {stderr_log_path}")
