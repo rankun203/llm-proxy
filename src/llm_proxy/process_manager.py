@@ -7,7 +7,6 @@ import logging
 import shlex
 import signal
 import subprocess
-from datetime import datetime
 from typing import List, Optional
 from .utils import parse_vllm_command
 
