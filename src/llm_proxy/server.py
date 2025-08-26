@@ -121,9 +121,10 @@ class ProxyServer:
                 ) as response:
                     return StreamingResponse(
                         self._stream_response(response),
+                        status_code=response.status_code,
                         media_type="text/event-stream",
                         headers={k: v for k, v in response.headers.items()
-                                 if k.lower() != "content-length"}
+                                 if k.lower() not in ["content-length", "transfer-encoding"]}
                     )
             else:
                 # Make the request to vLLM server for non-streaming
