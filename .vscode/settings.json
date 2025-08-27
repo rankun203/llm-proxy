@@ -3,6 +3,7 @@
     "flashinfer",
     "gres",
     "numpy",
+    "ondemand",
     "Qwen",
     "SLURM",
     "srun",

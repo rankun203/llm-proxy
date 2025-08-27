@@ -1,4 +1,4 @@
-# llm-proxy
+# llm-proxy-ondemand
 
 A FastAPI proxy server for vLLM with SLURM support and automatic process management.
 
@@ -15,14 +15,14 @@ A FastAPI proxy server for vLLM with SLURM support and automatic process managem
 ## Installation
 
 ```bash
-pip install llm-proxy
+pip install llm-proxy-ondemand
 ```
 
 Or install from source:
 
 ```bash
 git clone <repository-url>
-cd llm-proxy
+cd llm-proxy-ondemand
 pip install -e .
 ```
 
@@ -33,10 +33,10 @@ pip install -e .
 Start a proxy server that will launch vLLM on-demand:
 
 ```bash
-llm-proxy -- uv run --with vllm python -m vllm.entrypoints.openai.api_server --model tiiuae/falcon3-10b-instruct
+llm-proxy-ondemand -- uv run --with vllm python -m vllm.entrypoints.openai.api_server --model tiiuae/falcon3-10b-instruct
 ```
 
-**Note:** Use `--` to separate llm-proxy options from the vLLM command.
+**Note:** Use `--` to separate llm-proxy-ondemand options from the vLLM command.
 
 This will:
 
@@ -48,7 +48,7 @@ This will:
 ### Custom Ports
 
 ```bash
-llm-proxy --port 8085 --target-port 8084 -- uv run --with vllm python -m vllm.entrypoints.openai.api_server --model some-model
+llm-proxy-ondemand --port 8085 --target-port 8084 -- uv run --with vllm python -m vllm.entrypoints.openai.api_server --model some-model
 ```
 
 ### SLURM Integration
@@ -56,7 +56,7 @@ llm-proxy --port 8085 --target-port 8084 -- uv run --with vllm python -m vllm.en
 For running on SLURM clusters with SSH reverse tunneling:
 
 ```bash
-llm-proxy --use-slurm --loopback-user e123456 --loopback-host 10.10.10.5 -- \
+llm-proxy-ondemand --use-slurm --loopback-user e123456 --loopback-host 10.10.10.5 -- \
   uv run --with vllm python -m vllm.entrypoints.openai.api_server \
   --model tiiuae/falcon3-10b-instruct \
   --api-key apikey \
@@ -66,12 +66,12 @@ llm-proxy --use-slurm --loopback-user e123456 --loopback-host 10.10.10.5 -- \
 ### Custom SLURM Resources
 
 ```bash
-llm-proxy --use-slurm --srun-cmd "srun --mem=60G --gres=gpu:2 --time=4:00:00" \
+llm-proxy-ondemand --use-slurm --srun-cmd "srun --mem=60G --gres=gpu:2 --time=4:00:00" \
   --loopback-user e123456 --loopback-host 10.10.10.5 -- \
   uv run --with vllm python -m vllm.entrypoints.openai.api_server --model some-model
 
 # A working example
-uv run --with vllm --with numpy==1.26.4 --with flashinfer-python==0.2.2 llm-proxy --use-slurm --loopback-user e128356 --loopback-host 10.205.51.153 --api-key password -- python -m vllm.entrypoints.openai.api_server --model Qwen/Qwen3-0.6B
+uv run --with vllm --with numpy==1.26.4 --with flashinfer-python==0.2.2 llm-proxy-ondemand --use-slurm --loopback-user e128356 --loopback-host 10.205.51.153 --api-key password -- python -m vllm.entrypoints.openai.api_server --model Qwen/Qwen3-0.6B
 ```
 
 Issues that are hard to debug:
@@ -81,7 +81,7 @@ Issues that are hard to debug:
 ### Custom Idle Timeout
 
 ```bash
-llm-proxy --idle-timeout 3600 -- uv run --with vllm python -m vllm.entrypoints.openai.api_server --model some-model
+llm-proxy-ondemand --idle-timeout 3600 -- uv run --with vllm python -m vllm.entrypoints.openai.api_server --model some-model
 ```
 
 ## Command Line Options
@@ -137,7 +137,7 @@ curl -X POST http://localhost:8100/v1/chat/completions \
 
 ## How It Works
 
-1. **Startup**: llm-proxy starts a FastAPI server immediately
+1. **Startup**: llm-proxy-ondemand starts a FastAPI server immediately
 2. **First Request**: When a request is made to `/v1/*`, the vLLM server is started
 3. **Proxying**: All subsequent requests are forwarded to the vLLM server
 4. **Idle Monitoring**: After the configured idle timeout, the vLLM server is shutdown
@@ -145,7 +145,7 @@ curl -X POST http://localhost:8100/v1/chat/completions \
 
 ## SLURM Integration Details
 
-When using `--use-slurm`, llm-proxy:
+When using `--use-slurm`, llm-proxy-ondemand:
 
 1. Constructs a SLURM job using the provided `--srun-cmd`
 2. Sets up SSH reverse tunneling from the compute node back to the proxy server
@@ -175,7 +175,7 @@ For SLURM usage:
 
 ```bash
 git clone <repository-url>
-cd llm-proxy
+cd llm-proxy-ondemand
 pip install -e .
 ```
 

@@ -1,5 +1,5 @@
 [project]
-name = "llm-proxy"
+name = "llm-proxy-ondemand"
 version = "0.1.0"
 description = "A FastAPI proxy server for vLLM w/wo SLURM support and automatic process management"
 readme = "README.md"
@@ -25,12 +25,12 @@ dependencies = [
 ]
 
 [project.scripts]
-llm-proxy = "llm_proxy.cli:main"
+llm-proxy-ondemand = "llm_proxy.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/yourusername/llm-proxy"
-Repository = "https://github.com/yourusername/llm-proxy"
-Issues = "https://github.com/yourusername/llm-proxy/issues"
+Homepage = "https://github.com/rankun203/llm-proxy"
+Repository = "https://github.com/rankun203/llm-proxy"
+Issues = "https://github.com/rankun203/llm-proxy/issues"
 
 [build-system]
 requires = ["hatchling"]
