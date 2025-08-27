@@ -166,7 +166,7 @@ uv run --with vllm python -m vllm.entrypoints.openai.api_server --host 0.0.0.0 -
 
 For SLURM usage:
 
-- SSH access to compute nodes
+- SSH access from compute node to current node
 - Proper SSH key setup for password-less authentication
 
 ## Development
