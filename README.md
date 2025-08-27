@@ -10,7 +10,7 @@ A FastAPI proxy server for vLLM with SLURM support and automatic process managem
 - **Idle timeout**: Automatically shutdown vLLM server after a configurable period of inactivity
 - **OpenAI-compatible API**: Proxy all vLLM OpenAI-compatible endpoints (`/v1/chat/completions`, `/v1/models`, etc.)
 - **Health monitoring**: Built-in health endpoint for monitoring
-- **Flexible command handling**: Works with any vLLM-compatible server command
+- **Flexible command handling**: Works with any vLLM-compatible server command (as long as target run command has --host and --port)
 
 ## Installation
 
@@ -93,7 +93,9 @@ llm-proxy --idle-timeout 3600 -- uv run --with vllm python -m vllm.entrypoints.o
 - `--loopback-user`: SSH user for reverse tunneling (required with --use-slurm)
 - `--loopback-host`: SSH host for reverse tunneling (required with --use-slurm)
 - `--idle-timeout`: Idle timeout in seconds before shutting down vLLM server (default: 1800)
+- `--ping-path`: Path to ping the target server to check if it's ready (default: /ping)
 - `--log-level`: Logging level (DEBUG, INFO, WARNING, ERROR, default: INFO)
+- `--api-key`: API key for Bearer token authentication (optional)
 
 ## API Endpoints
 
