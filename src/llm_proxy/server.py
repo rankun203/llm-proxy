@@ -113,8 +113,8 @@ class ProxyServer:
                     detail="Failed to start vLLM server"
                 )
 
-            # Wait for server to be ready
-            await self._wait_for_vllm_ready()
+        # Always check if vLLM server is ready
+        await self._wait_for_vllm_ready()
 
         # Forward the request
         target_url = f"http://localhost:{self.target_port}/v1/{path}"
