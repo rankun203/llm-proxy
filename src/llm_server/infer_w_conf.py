@@ -1,3 +1,12 @@
+"""
+Example usage:
+1. Install vLLM: pip install vllm
+2. Run the script:
+   - Default: python infer_w_conf.py
+   - Custom message: python infer_w_conf.py "Hello, I am "
+   - Other examples: python infer_w_conf.py "The countries using Mandarin as the official language include "
+"""
+
 from vllm import LLM, SamplingParams
 import math
 import sys
