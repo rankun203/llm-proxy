@@ -64,9 +64,9 @@ for output in outputs:
             total_prob_shown += probability
             
             if rank == 1:
-                print(f"{decoded_token}| {probability:.4f}")
+                print(f"{decoded_token:<10}| {probability:.4f}")
             else:
-                print(f"\t{decoded_token}| {probability:.4f}")
+                print(f"\t{decoded_token:<10}| {probability:.4f}")
 
         print(f"  Top 5 probability\t: {total_prob_shown:.6f}")
         print(f"  Remaining probability\t: {1.0 - total_prob_shown:.6f}")
