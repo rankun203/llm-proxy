@@ -65,7 +65,7 @@ class ProxyServer:
             """Health check endpoint."""
             return {
                 "status": "healthy",
-                "llm_running": self.process_manager.is_server_running(),
+                "worker_running": self.process_manager.is_server_running(),
                 "target_port": self.target_port,
                 "last_request": self.last_request_time
             }
