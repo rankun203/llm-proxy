@@ -31,6 +31,7 @@ class ProcessManager:
         self.instance_id = instance_id
         self.process: Optional[subprocess.Popen] = None
         self.is_running = False
+        self.is_starting = False  # New state to track if server is starting
         self.stdout_file = None
         self.stderr_file = None
 
@@ -48,6 +49,11 @@ class ProcessManager:
             logger.warning("vLLM server is already running")
             return True
 
+        if self.is_starting:
+            logger.warning("vLLM server is already starting")
+            return True
+
+        self.is_starting = True
         try:
             # Parse and modify the vLLM command
             modified_command = parse_vllm_command(
@@ -102,6 +108,8 @@ class ProcessManager:
             self.is_running = False
             self._close_log_files()
             return False
+        finally:
+            self.is_starting = False
 
     def _build_slurm_command(self, vllm_command: List[str]) -> List[str]:
         """
@@ -195,7 +203,7 @@ ssh -v -N -f -R {self.target_port}:localhost:{self.target_port} {self.loopback_u
             finally:
                 self.stderr_file = None
 
-    def is_server_running(self) -> bool:
+    def is_process_running(self) -> bool:
         """
         Check if the vLLM server is running.
 
@@ -211,6 +219,15 @@ ssh -v -N -f -R {self.target_port}:localhost:{self.target_port} {self.loopback_u
             return False
 
         return True
+
+    def is_process_starting_or_running(self) -> bool:
+        """
+        Check if the vLLM server is starting or running.
+
+        Returns:
+            True if starting or running, False otherwise
+        """
+        return self.is_starting or self.is_process_running()
 
     async def cleanup(self):
         """Clean up resources."""

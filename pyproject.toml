@@ -1,6 +1,6 @@
 [project]
 name = "llm-proxy-ondemand"
-version = "0.1.0"
+version = "0.1.1"
 description = "A FastAPI proxy server for vLLM w/wo SLURM support and automatic process management"
 readme = "README.md"
 requires-python = ">=3.10"

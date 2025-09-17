@@ -9,7 +9,6 @@ import time
 from typing import Optional
 from fastapi import FastAPI, Request, HTTPException, Depends, Header
 from fastapi.responses import JSONResponse, StreamingResponse
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import httpx
 from .process_manager import ProcessManager
 
@@ -65,7 +64,8 @@ class ProxyServer:
             """Health check endpoint."""
             return {
                 "status": "healthy",
-                "worker_running": self.process_manager.is_server_running(),
+                "worker_running": self.process_manager.is_process_running(),
+                "worker_starting": self.process_manager.is_starting,
                 "target_port": self.target_port,
                 "last_request": self.last_request_time
             }
@@ -97,8 +97,9 @@ class ProxyServer:
         """Handle proxy requests to vLLM server."""
         self.last_request_time = time.time()
 
-        # Start vLLM server if not running
-        if not self.process_manager.is_server_running():
+        # Check if server is starting or running
+        if not self.process_manager.is_process_starting_or_running():
+            # Server is not started yet, start it
             if not self.vllm_command:
                 raise HTTPException(
                     status_code=503,
@@ -113,7 +114,7 @@ class ProxyServer:
                     detail="Failed to start vLLM server"
                 )
 
-        # Always check if vLLM server is ready
+        # Always wait for vLLM server to be fully ready
         await self._wait_for_vllm_ready()
 
         # Forward the request
@@ -222,7 +223,7 @@ class ProxyServer:
         while True:
             await asyncio.sleep(60)  # Check every minute
 
-            if self.process_manager.is_server_running():
+            if self.process_manager.is_process_running():
                 idle_time = time.time() - self.last_request_time
                 if idle_time > self.idle_timeout:
                     logger.info(
