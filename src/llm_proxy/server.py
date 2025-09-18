@@ -43,17 +43,19 @@ class ProxyServer:
         """Verify API token if API key is configured."""
         if not self.api_key:
             return True
-        
+
         if not authorization:
-            raise HTTPException(status_code=401, detail="Authorization header required")
-        
+            raise HTTPException(
+                status_code=401, detail="Authorization header required")
+
         if not authorization.startswith("Bearer "):
-            raise HTTPException(status_code=401, detail="Invalid authorization format")
-        
+            raise HTTPException(
+                status_code=401, detail="Invalid authorization format")
+
         token = authorization[7:]  # Remove "Bearer " prefix
         if token != self.api_key:
             raise HTTPException(status_code=401, detail="Invalid API key")
-        
+
         return True
 
     def _setup_routes(self):
@@ -62,12 +64,16 @@ class ProxyServer:
         @self.app.get("/health")
         async def health():
             """Health check endpoint."""
+            idle_time = time.time() - self.last_request_time
             return {
                 "status": "healthy",
                 "worker_running": self.process_manager.is_process_running(),
                 "worker_starting": self.process_manager.is_starting,
                 "target_port": self.target_port,
-                "last_request": self.last_request_time
+                "last_request": self.last_request_time,
+                "idle_timeout": self.idle_timeout,
+                "idle_time": idle_time,
+                "idle_time_left": self.idle_timeout - idle_time,
             }
 
         @self.app.api_route("/v1/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
