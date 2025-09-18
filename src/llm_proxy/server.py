@@ -71,7 +71,6 @@ class ProxyServer:
                 "worker_starting": self.process_manager.is_starting,
                 "target_port": self.target_port,
                 "last_request": self.last_request_time,
-                "idle_timeout": self.idle_timeout,
                 "idle_time": idle_time,
                 "idle_time_left": self.idle_timeout - idle_time,
             }
