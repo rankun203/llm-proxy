@@ -35,6 +35,7 @@ class ProxyServer:
         self.vllm_command: Optional[list] = None
         self.app = FastAPI(title="llm-proxy", version="0.1.0")
         self.client = httpx.AsyncClient(timeout=300.0)  # 5 minute timeout
+        self.worker_ready = False
 
         self._setup_routes()
         self._start_idle_monitor()
@@ -69,6 +70,7 @@ class ProxyServer:
                 "status": "healthy",
                 "worker_running": self.process_manager.is_process_running(),
                 "worker_starting": self.process_manager.is_starting,
+                "worker_healthy": self.process_manager.is_healthy,
                 "target_port": self.target_port,
                 "last_request": self.last_request_time,
                 "idle_time": idle_time,
@@ -208,6 +210,8 @@ class ProxyServer:
                 ping_url = f"http://localhost:{self.target_port}{self.ping_path}"
                 response = await self.client.get(ping_url, timeout=5.0)
                 if response.status_code == 200:
+                    self.worker_ready = True
+                    self.process_manager.is_healthy = True
                     logger.info("vLLM server is ready")
                     return
             except Exception as e:
@@ -241,5 +245,6 @@ class ProxyServer:
 
     async def cleanup(self):
         """Clean up resources."""
+        self.worker_ready = False
         await self.client.aclose()
         await self.process_manager.cleanup()

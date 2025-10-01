@@ -4,6 +4,7 @@
     "gres",
     "numpy",
     "ondemand",
+    "preexec",
     "Qwen",
     "SLURM",
     "srun",

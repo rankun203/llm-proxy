@@ -31,6 +31,9 @@ class ProcessManager:
         self.instance_id = instance_id
         self.process: Optional[subprocess.Popen] = None
         self.is_running = False
+        """Once the underlying process is started, this becomes True"""
+        self.is_healthy = False
+        """Becomes True once the server is health and ready to take requests"""
         self.is_starting = False  # New state to track if server is starting
         self.stdout_file = None
         self.stderr_file = None
@@ -172,6 +175,7 @@ ssh -v -N -f -R {self.target_port}:localhost:{self.target_port} {self.loopback_u
                 logger.info("vLLM server force killed")
 
             self.is_running = False
+            self.is_healthy = False
             self.process = None
             self._close_log_files()
             return True
